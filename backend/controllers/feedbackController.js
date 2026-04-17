@@ -1,17 +1,13 @@
+const blockchainService = require('../services/blockchainService');
+
 const submitFeedback = async (req, res, next) => {
   try {
-    const { text, category, walletAddress } = req.body;
-
-    if (!text || !category || !walletAddress) {
-      return res.status(400).json({ error: 'Text, category and walletAddress are required' });
+    const { text, category } = req.body;
+    if (!text || !category) {
+      return res.status(400).json({ error: 'Text and category are required' });
     }
-
-    // Blockchain call will be added in Step 4
-    res.status(201).json({
-      message: 'Feedback submitted successfully',
-      data: { text, category, walletAddress }
-    });
-
+    const result = await blockchainService.submitFeedback(text, category);
+    res.status(201).json({ message: 'Feedback submitted', data: result });
   } catch (error) {
     next(error);
   }
@@ -19,8 +15,8 @@ const submitFeedback = async (req, res, next) => {
 
 const getAllFeedback = async (req, res, next) => {
   try {
-    // Blockchain call will be added in Step 4
-    res.status(200).json({ message: 'All feedback', data: [] });
+    const feedbacks = await blockchainService.getAllFeedback();
+    res.status(200).json({ data: feedbacks });
   } catch (error) {
     next(error);
   }
@@ -29,8 +25,8 @@ const getAllFeedback = async (req, res, next) => {
 const getFeedbackById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    // Blockchain call will be added in Step 4
-    res.status(200).json({ message: `Feedback ${id}`, data: {} });
+    const feedback = await blockchainService.getFeedbackById(Number(id));
+    res.status(200).json({ data: feedback });
   } catch (error) {
     next(error);
   }
@@ -40,13 +36,11 @@ const respondToFeedback = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { response } = req.body;
-
     if (!response) {
       return res.status(400).json({ error: 'Response text is required' });
     }
-
-    // Blockchain call will be added in Step 4
-    res.status(200).json({ message: `Responded to feedback ${id}` });
+    const result = await blockchainService.respondToFeedback(Number(id), response);
+    res.status(200).json({ message: 'Response submitted', data: result });
   } catch (error) {
     next(error);
   }
@@ -56,14 +50,8 @@ const updateStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { newStatus } = req.body;
-
-    const validStatuses = ['PENDING', 'REVIEWED', 'RESOLVED'];
-    if (!validStatuses.includes(newStatus)) {
-      return res.status(400).json({ error: 'Invalid status value' });
-    }
-
-    // Blockchain call will be added in Step 4
-    res.status(200).json({ message: `Status updated to ${newStatus}` });
+    const result = await blockchainService.updateStatus(Number(id), newStatus);
+    res.status(200).json({ message: 'Status updated', data: result });
   } catch (error) {
     next(error);
   }
@@ -71,10 +59,8 @@ const updateStatus = async (req, res, next) => {
 
 const getStats = async (req, res, next) => {
   try {
-    // Blockchain call will be added in Step 4
-    res.status(200).json({
-      data: { total: 0, pending: 0, reviewed: 0, resolved: 0 }
-    });
+    const stats = await blockchainService.getStats();
+    res.status(200).json({ data: stats });
   } catch (error) {
     next(error);
   }
