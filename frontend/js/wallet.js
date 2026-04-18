@@ -3,7 +3,7 @@ let userRole = 'student';
 
 const connectWallet = async () => {
   if (typeof window.ethereum === 'undefined') {
-    alert('MetaMask is not installed. Please install MetaMask to use this DApp.');
+    alert('MetaMask is not installed. Please install MetaMask.');
     window.open('https://metamask.io/download', '_blank');
     return;
   }
@@ -12,19 +12,19 @@ const connectWallet = async () => {
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     walletAddress = accounts[0];
 
+    // Get wallet balance
     const balanceWei = await window.ethereum.request({
       method: 'eth_getBalance',
       params: [walletAddress, 'latest']
     });
-
     const balanceETH = (parseInt(balanceWei, 16) / 1e18).toFixed(4);
 
-    // Check role from backend
-    const response = await fetch('http://localhost:5000/api/feedback/stats', {
+    // ✅ Correct admin check
+    const adminCheck = await fetch('http://localhost:5000/api/auth/check-admin', {
       headers: { 'wallet-address': walletAddress }
     });
-
-    userRole = response.ok ? 'admin' : 'student';
+    const adminResult = await adminCheck.json();
+    userRole = adminResult.isAdmin ? 'admin' : 'student';
 
     updateWalletUI(walletAddress, balanceETH, userRole);
     loadCurrentPage();

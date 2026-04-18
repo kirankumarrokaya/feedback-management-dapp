@@ -71,24 +71,6 @@ const submitResponse = async (id) => {
   }
 };
 
-const handleUpdateStatus = async (id, currentStatus) => {
-  const nextStatus = { 'PENDING': 'REVIEWED', 'REVIEWED': 'RESOLVED' };
-  const newStatus = nextStatus[currentStatus];
-
-  if (!newStatus) { alert('Already resolved'); return; }
-
-  if (!confirm(`Update status to ${newStatus}?`)) return;
-
-  try {
-    const result = await apiUpdateStatus(id, newStatus);
-    if (result.data && result.data.txHash) {
-      showTxModal(result.data.txHash);
-      renderAdminPanel();
-    }
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
-};
 
 // Event listeners
 document.getElementById('connectBtn').addEventListener('click', connectWallet);
@@ -96,3 +78,97 @@ document.getElementById('disconnectBtn').addEventListener('click', disconnectWal
 
 // Load dashboard on start
 renderDashboard();
+
+const handleUpvote = async (id) => {
+  if (!walletAddress) { alert('Connect wallet to vote'); return; }
+  try {
+    const result = await apiUpvote(id);
+    if (result.data && result.data.txHash) {
+      showTxModal(result.data.txHash);
+      renderViewPage();
+    } else {
+      alert(result.error || 'Error voting');
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+};
+
+const handleDownvote = async (id) => {
+  if (!walletAddress) { alert('Connect wallet to vote'); return; }
+  try {
+    const result = await apiDownvote(id);
+    if (result.data && result.data.txHash) {
+      showTxModal(result.data.txHash);
+      renderViewPage();
+    } else {
+      alert(result.error || 'Error voting');
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+};
+
+const handleEditFeedback = (id, currentText) => {
+  const area = document.getElementById(`responses-${id}`);
+  area.classList.remove('d-none');
+  area.innerHTML = `
+    <div class="card p-3 border-warning">
+      <h6>✏️ Edit Feedback #${id}</h6>
+      <textarea id="editText-${id}" class="form-control mb-2" rows="3">${currentText}</textarea>
+      <button class="btn btn-warning btn-sm" onclick="submitEdit(${id})">
+        Save Edit to Blockchain
+      </button>
+    </div>
+  `;
+};
+
+const submitEdit = async (id) => {
+  const newText = document.getElementById(`editText-${id}`).value.trim();
+  if (!newText) { alert('Text cannot be empty'); return; }
+  try {
+    const result = await apiEditFeedback(id, newText);
+    if (result.data && result.data.txHash) {
+      showTxModal(result.data.txHash);
+      renderViewPage();
+    } else {
+      alert(result.error || 'Error editing');
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+};
+
+const submitAdminResponse = async (id) => {
+  const responseText = document.getElementById('responseText').value.trim();
+  if (!responseText) { alert('Response cannot be empty'); return; }
+  try {
+    const result = await apiAdminRespond(id, responseText);
+    if (result.data && result.data.txHash) {
+      showTxModal(result.data.txHash);
+      renderAdminPanel();
+    } else {
+      alert(result.error || 'Error submitting response');
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+};
+
+const handleUpdateStatus = async (id, currentStatus) => {
+  const nextStatus = { 'PENDING': 'REVIEWED', 'REVIEWED': 'RESOLVED' };
+  const newStatus = nextStatus[currentStatus];
+  if (!newStatus) { alert('Already resolved'); return; }
+  if (!confirm(`Update status to ${newStatus}?`)) return;
+  try {
+    const result = await apiUpdateStatus(id, newStatus);
+    if (result.data && result.data.txHash) {
+      showTxModal(result.data.txHash);
+      renderAdminPanel();
+    } else {
+      alert(result.error || 'Error updating status');
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+};
