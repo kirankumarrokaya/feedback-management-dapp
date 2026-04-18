@@ -3,9 +3,25 @@ const renderDashboard = async () => {
   container.innerHTML = `<div class="loading-spinner"><div class="spinner-border text-primary"></div></div>`;
 
   try {
-    const stats = walletAddress
-      ? (await apiGetStats()).data
-      : { total: 0, pending: 0, reviewed: 0, resolved: 0 };
+    let stats = { total: 0, pending: 0, reviewed: 0, resolved: 0 };
+
+    if (walletAddress) {
+      if (userRole === 'admin') {
+        // Admin gets stats directly from stats endpoint
+        const result = await apiGetStats();
+        stats = result.data || stats;
+      } else {
+        // Student calculates stats from getAllFeedback (public endpoint)
+        const result = await apiGetAllFeedback();
+        const feedbacks = result.data || [];
+        stats = {
+          total: feedbacks.length,
+          pending: feedbacks.filter(f => f.status === 'PENDING').length,
+          reviewed: feedbacks.filter(f => f.status === 'REVIEWED').length,
+          resolved: feedbacks.filter(f => f.status === 'RESOLVED').length
+        };
+      }
+    }
 
     container.innerHTML = `
       <h4 class="mb-4">📊 Dashboard Overview</h4>
@@ -35,8 +51,12 @@ const renderDashboard = async () => {
           </div>
         </div>
       </div>
-      ${!walletAddress ? '<div class="alert alert-warning">Connect your wallet to see full stats and submit feedback.</div>' : ''}
+      ${!walletAddress
+        ? '<div class="alert alert-warning">Connect your wallet to see full stats and submit feedback.</div>'
+        : `<div class="alert alert-info">Connected as <strong>${userRole.toUpperCase()}</strong> — ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}</div>`
+      }
     `;
+
   } catch (err) {
     container.innerHTML = `<div class="alert alert-danger">Error loading dashboard: ${err.message}</div>`;
   }
