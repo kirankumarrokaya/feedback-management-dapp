@@ -299,4 +299,4 @@ contract FeedbackContract {
     function isOwner(address _wallet) public view returns (bool) {
         return _wallet == owner;
     }
-}
+} 
