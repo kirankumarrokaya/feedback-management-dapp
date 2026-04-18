@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Feedback Management DApp</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-dark bg-dark px-4">
+    <span class="navbar-brand fw-bold">📋 Feedback DApp</span>
+    <div class="d-flex align-items-center gap-3">
+      <span id="walletDisplay" class="text-light small"></span>
+      <span id="balanceDisplay" class="text-warning small"></span>
+      <span id="roleDisplay" class="badge bg-info"></span>
+      <button id="connectBtn" class="btn btn-outline-light btn-sm">Connect Wallet</button>
+      <button id="disconnectBtn" class="btn btn-outline-danger btn-sm d-none">Disconnect</button>
+    </div>
+  </nav>
+
+  <!-- PAGE NAVIGATION -->
+  <div class="container mt-3">
+    <ul class="nav nav-tabs" id="mainTabs">
+      <li class="nav-item">
+        <a class="nav-link active" href="#" onclick="showPage('dashboard')">🏠 Dashboard</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" onclick="showPage('submit')">📝 Submit Feedback</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" onclick="showPage('view')">📋 View Feedback</a>
+      </li>
+      <li class="nav-item d-none" id="adminTab">
+        <a class="nav-link" href="#" onclick="showPage('admin')">🔐 Admin Panel</a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- PAGES -->
+  <div class="container mt-4">
+    <div id="page-dashboard"></div>
+    <div id="page-submit" class="d-none"></div>
+    <div id="page-view" class="d-none"></div>
+    <div id="page-admin" class="d-none"></div>
+  </div>
+
+  <!-- TRANSACTION MODAL -->
+  <div class="modal fade" id="txModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title">✅ Transaction Successful</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Your transaction has been confirmed on the blockchain!</p>
+          <p class="fw-bold">Transaction Hash:</p>
+          <p id="txHashDisplay" class="text-break small text-muted"></p>
+          <a id="etherscanLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm">
+            🔗 View on Etherscan
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/pages.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

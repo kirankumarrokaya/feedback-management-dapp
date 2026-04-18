@@ -1,0 +1,50 @@
+body {
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.navbar {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.stat-card {
+  border-radius: 12px;
+  padding: 24px;
+  color: white;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.stat-card h2 {
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.card-total { background: linear-gradient(135deg, #667eea, #764ba2); }
+.card-pending { background: linear-gradient(135deg, #f093fb, #f5576c); }
+.card-reviewed { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.card-resolved { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+
+.feedback-card {
+  border-left: 4px solid #667eea;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.badge-PENDING { background-color: #f5576c; }
+.badge-REVIEWED { background-color: #4facfe; }
+.badge-RESOLVED { background-color: #43e97b; color: #000; }
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.tx-hash {
+  font-size: 0.75rem;
+  word-break: break-all;
+  color: #6c757d;
+}
