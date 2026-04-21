@@ -114,3 +114,15 @@ const apiAdminRespond = async (id, responseText) => {
   });
   return res.json();
 };
+
+const apiAddComment = async (id, responseText) => {
+  const res = await fetch(`${API_URL}/feedback/${id}/comment`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'wallet-address': walletAddress
+    },
+    body: JSON.stringify({ responseText })
+  });
+  return res.json();
+};

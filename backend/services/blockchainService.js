@@ -123,9 +123,22 @@ const getAllFeedback = async () => {
     const result = await readContract.getAllFeedback();
     const [ids, texts, cats, stats, submitters, timestamps, upvotes, downvotes] = result;
 
-    return ids.map((id, i) =>
-      formatFeedback(id, texts[i], cats[i], stats[i], submitters[i], timestamps[i], upvotes[i], downvotes[i])
-    );
+    const feedbacks = await Promise.all(ids.map(async (id, i) => {
+      let responseCount = 0;
+      try {
+        const responses = await readContract.getResponses(Number(id));
+        responseCount = responses.length;
+      } catch (e) {
+        responseCount = 0;
+      }
+
+      return {
+        ...formatFeedback(id, texts[i], cats[i], stats[i], submitters[i], timestamps[i], upvotes[i], downvotes[i]),
+        responseCount
+      };
+    }));
+
+    return feedbacks;
   } catch (error) {
     throw new Error(`Get all error: ${error.message}`);
   }
@@ -144,6 +157,7 @@ const getFeedbackById = async (id) => {
 const getResponses = async (id) => {
   try {
     const responses = await readContract.getResponses(id);
+    if (!responses || responses.length === 0) return [];
     return responses.map(r => ({
       adminWallet: r.adminWallet,
       responseText: r.responseText,
@@ -183,6 +197,17 @@ const getStats = async () => {
   }
 };
 
+const addComment = async (id, responseText) => {
+  try {
+    const tx = await contract.addResponse(id, responseText);
+    const receipt = await tx.wait();
+    return { txHash: receipt.hash };
+  } catch (error) {
+    throw new Error(`Comment error: ${error.message}`);
+  }
+};
+
+// Add to exports
 module.exports = {
   submitFeedback,
   editFeedback,
@@ -191,6 +216,7 @@ module.exports = {
   getVoteScore,
   hasUserVoted,
   addResponse,
+  addComment,     
   updateStatus,
   getAllFeedback,
   getFeedbackById,

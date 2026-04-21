@@ -197,6 +197,28 @@ const getStats = async (req, res, next) => {
   }
 };
 
+const addComment = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { responseText } = req.body;
+
+    if (!responseText) {
+      return res.status(400).json({ error: 'Comment text is required' });
+    }
+
+    // Comments use same addResponse function on blockchain
+    // but are allowed for all wallets
+    const result = await blockchainService.addComment(Number(id), responseText);
+    res.status(200).json({
+      message: 'Comment added successfully',
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Add to exports
 module.exports = {
   submitFeedback,
   editFeedback,
@@ -204,6 +226,7 @@ module.exports = {
   downvoteFeedback,
   checkVote,
   addResponse,
+  addComment,      
   updateStatus,
   getAllFeedback,
   getFeedbackById,

@@ -172,3 +172,21 @@ const handleUpdateStatus = async (id, currentStatus) => {
     alert('Error: ' + err.message);
   }
 };
+
+const submitComment = async (id) => {
+  const text = document.getElementById(`commentText-${id}`).value.trim();
+  if (!text) { alert('Comment cannot be empty'); return; }
+
+  try {
+    const result = await apiAddComment(id, text);
+    if (result.data && result.data.txHash) {
+      showTxModal(result.data.txHash);
+      toggleResponses(id); // close
+      setTimeout(() => toggleResponses(id), 500); // reopen refreshed
+    } else {
+      alert(result.error || 'Error adding comment');
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+};

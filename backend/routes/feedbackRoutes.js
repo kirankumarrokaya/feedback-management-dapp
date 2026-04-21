@@ -26,11 +26,13 @@ router.post('/', checkWallet, feedbackController.submitFeedback);
 router.put('/:id/edit', checkWallet, feedbackController.editFeedback);
 router.post('/:id/upvote', checkWallet, feedbackController.upvoteFeedback);
 router.post('/:id/downvote', checkWallet, feedbackController.downvoteFeedback);
+router.post('/:id/comment', checkWallet, feedbackController.addComment);
 
 // =====================
 // ADMIN ROUTES
 // =====================
 router.post('/:id/respond', checkAdmin, feedbackController.addResponse);
 router.put('/:id/status', checkAdmin, feedbackController.updateStatus);
+router.post('/:id/respond', checkAdmin, feedbackController.addResponse);
 
 module.exports = router;

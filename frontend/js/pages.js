@@ -1,4 +1,14 @@
 // =====================
+// FILTER STATE
+// =====================
+const filterState = {
+  search: '',
+  status: 'ALL',
+  category: 'ALL',
+  sort: 'NEWEST'
+};
+
+// =====================
 // DASHBOARD PAGE
 // =====================
 const renderDashboard = async () => {
@@ -135,67 +145,85 @@ const renderViewPage = async () => {
   try {
     const result = await apiGetAllFeedback();
     allFeedbackCache = result.data || [];
-    renderFeedbackList(allFeedbackCache);
+
+    filterState.search = '';
+    filterState.status = 'ALL';
+    filterState.category = 'ALL';
+    filterState.sort = 'NEWEST';
+    window.currentFeedbackPage = 1;
+
+    // Render full page structure ONCE
+    container.innerHTML = `
+      <div class="card p-3 mb-4 shadow-sm">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label fw-bold">🔍 Search</label>
+            <input type="text" id="searchInput" class="form-control"
+              placeholder="Search feedback..." oninput="applyFilters()"/>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-bold">Status</label>
+            <select id="statusFilter" class="form-select" onchange="applyFilters()">
+              <option value="ALL">All</option>
+              <option value="PENDING">⏳ Pending</option>
+              <option value="REVIEWED">🔍 Reviewed</option>
+              <option value="RESOLVED">✅ Resolved</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-bold">Category</label>
+            <select id="categoryFilter" class="form-select" onchange="applyFilters()">
+              <option value="ALL">All</option>
+              <option value="TEACHING">📚 Teaching</option>
+              <option value="FACILITIES">🏫 Facilities</option>
+              <option value="ADMIN">🏢 Admin</option>
+              <option value="OTHER">💬 Other</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-bold">Sort By</label>
+            <select id="sortFilter" class="form-select" onchange="applyFilters()">
+              <option value="NEWEST">Newest First</option>
+              <option value="OLDEST">Oldest First</option>
+              <option value="HIGHEST">Highest Score</option>
+              <option value="LOWEST">Lowest Score</option>
+              <option value="MOST_UPVOTED">Most Upvoted</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+              🔄 Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONLY THIS PART GETS UPDATED ON FILTER -->
+      <div id="feedbackListContainer"></div>
+    `;
+
+    // Render cards into the container
+    renderFeedbackCards(allFeedbackCache);
+
   } catch (err) {
     container.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
   }
 };
 
+// Only updates the cards — never touches filter bar
 const renderFeedbackList = (feedbacks) => {
-  const container = document.getElementById('page-view');
+  renderFeedbackCards(feedbacks);
+};
 
-  const filterBar = `
-    <div class="card p-3 mb-4 shadow-sm">
-      <div class="row g-2 align-items-end">
-        <div class="col-md-4">
-          <label class="form-label fw-bold">🔍 Search</label>
-          <input type="text" id="searchInput" class="form-control"
-            placeholder="Search feedback..." oninput="applyFilters()"/>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label fw-bold">Status</label>
-          <select id="statusFilter" class="form-select" onchange="applyFilters()">
-            <option value="ALL">All</option>
-            <option value="PENDING">⏳ Pending</option>
-            <option value="REVIEWED">🔍 Reviewed</option>
-            <option value="RESOLVED">✅ Resolved</option>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label fw-bold">Category</label>
-          <select id="categoryFilter" class="form-select" onchange="applyFilters()">
-            <option value="ALL">All</option>
-            <option value="TEACHING">📚 Teaching</option>
-            <option value="FACILITIES">🏫 Facilities</option>
-            <option value="ADMIN">🏢 Admin</option>
-            <option value="OTHER">💬 Other</option>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label fw-bold">Sort By</label>
-          <select id="sortFilter" class="form-select" onchange="applyFilters()">
-            <option value="NEWEST">Newest First</option>
-            <option value="OLDEST">Oldest First</option>
-            <option value="HIGHEST">Highest Score</option>
-            <option value="LOWEST">Lowest Score</option>
-            <option value="MOST_UPVOTED">Most Upvoted</option>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
-            🔄 Reset
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
+const renderFeedbackCards = (feedbacks) => {
+  const container = document.getElementById('feedbackListContainer');
+  if (!container) return;
 
   if (feedbacks.length === 0) {
-    container.innerHTML = filterBar + `<div class="alert alert-info">No feedback found.</div>`;
+    container.innerHTML = `<div class="alert alert-info">No feedback found.</div>`;
     return;
   }
 
-  // Pagination
   const page = window.currentFeedbackPage || 1;
   const perPage = 10;
   const totalPages = Math.ceil(feedbacks.length / perPage);
@@ -203,8 +231,6 @@ const renderFeedbackList = (feedbacks) => {
 
   const cards = paginated.map(f => `
     <div class="card feedback-card p-3 mb-3">
-
-      <!-- HEADER -->
       <div class="d-flex justify-content-between align-items-center mb-2">
         <div class="d-flex gap-2">
           <span class="badge text-white" style="background:${statusColor(f.status)}">${f.status}</span>
@@ -213,21 +239,18 @@ const renderFeedbackList = (feedbacks) => {
         <small class="text-muted">${new Date(f.timestamp).toLocaleDateString()}</small>
       </div>
 
-      <!-- FEEDBACK TEXT -->
       <p class="mb-1 fw-semibold">${f.text}</p>
       <small class="text-muted">By: ${f.submittedBy.slice(0,6)}...${f.submittedBy.slice(-4)}</small>
 
       <!-- VOTE SECTION -->
       <div class="d-flex align-items-center gap-3 mt-2">
         ${walletAddress && f.submittedBy.toLowerCase() === walletAddress.toLowerCase()
-          ? `<span class="badge bg-secondary py-2">🚫 Cannot vote on your own feedback</span>`
+          ? `<span class="badge bg-secondary py-2">🚫 Your feedback</span>`
           : `
-            <button class="btn btn-sm btn-outline-success"
-              onclick="handleUpvote(${f.id})" id="upvote-${f.id}">
+            <button class="btn btn-sm btn-outline-success" onclick="handleUpvote(${f.id})">
               👍 ${f.upvotes}
             </button>
-            <button class="btn btn-sm btn-outline-danger"
-              onclick="handleDownvote(${f.id})" id="downvote-${f.id}">
+            <button class="btn btn-sm btn-outline-danger" onclick="handleDownvote(${f.id})">
               👎 ${f.downvotes}
             </button>
           `
@@ -235,49 +258,38 @@ const renderFeedbackList = (feedbacks) => {
         <span class="badge ${f.voteScore >= 0 ? 'bg-success' : 'bg-danger'}">
           Score: ${f.voteScore >= 0 ? '+' : ''}${f.voteScore}
         </span>
-      </div>  
-
-      <!-- ACTION BUTTONS -->
-      <div class="d-flex gap-2 mt-2">
-        <button class="btn btn-sm btn-outline-primary"
-          onclick="toggleResponses(${f.id})">
-          💬 Responses
-        </button>
-        <button class="btn btn-sm btn-outline-secondary"
-          onclick="toggleHistory(${f.id})">
-          🕐 Edit History
-        </button>
-        ${walletAddress && f.submittedBy.toLowerCase() === walletAddress.toLowerCase() && f.status === 'PENDING'
-          ? `<button class="btn btn-sm btn-outline-warning" onclick="handleEditFeedback(${f.id}, \`${f.text}\`)">✏️ Edit</button>`
-          : ''
-        }
       </div>
 
-      <!-- RESPONSES THREAD (hidden by default) -->
+      <!-- ACTION BUTTONS -->
+<div class="d-flex gap-2 mt-2 flex-wrap">
+  <button class="btn btn-sm btn-outline-primary" onclick="toggleResponses(${f.id})">
+    💬 Responses ${f.responseCount > 0 ? `<span class="badge bg-primary ms-1">${f.responseCount}</span>` : ''}
+  </button>
+  <button class="btn btn-sm btn-outline-secondary" onclick="toggleHistory(${f.id})">
+    🕐 Edit History
+  </button>
+  ${walletAddress && f.submittedBy.toLowerCase() === walletAddress.toLowerCase() && f.status === 'PENDING'
+    ? `<button class="btn btn-sm btn-outline-warning" onclick="handleEditFeedback(${f.id}, \`${f.text}\`)">✏️ Edit</button>`
+    : ''
+  }
+</div>
+
       <div id="responses-${f.id}" class="d-none mt-3"></div>
-
-      <!-- EDIT HISTORY (hidden by default) -->
       <div id="history-${f.id}" class="d-none mt-3"></div>
-
     </div>
   `).join('');
 
-  // Pagination controls
   const pagination = totalPages > 1 ? `
     <div class="d-flex justify-content-center gap-2 mt-4">
       <button class="btn btn-outline-primary btn-sm"
-        onclick="changePage(${page - 1})" ${page === 1 ? 'disabled' : ''}>
-        ← Previous
-      </button>
+        onclick="changePage(${page - 1})" ${page === 1 ? 'disabled' : ''}>← Previous</button>
       <span class="btn btn-light btn-sm">Page ${page} of ${totalPages}</span>
       <button class="btn btn-outline-primary btn-sm"
-        onclick="changePage(${page + 1})" ${page === totalPages ? 'disabled' : ''}>
-        Next →
-      </button>
+        onclick="changePage(${page + 1})" ${page === totalPages ? 'disabled' : ''}>Next →</button>
     </div>
   ` : '';
 
-  container.innerHTML = filterBar +
+  container.innerHTML =
     `<h4 class="mb-3">📋 All Feedback (${feedbacks.length})</h4>` +
     cards + pagination;
 };
@@ -286,30 +298,63 @@ const renderFeedbackList = (feedbacks) => {
 // FILTER & SORT
 // =====================
 const applyFilters = () => {
-  const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
-  const status = document.getElementById('statusFilter')?.value || 'ALL';
-  const category = document.getElementById('categoryFilter')?.value || 'ALL';
-  const sort = document.getElementById('sortFilter')?.value || 'NEWEST';
+  // Save current filter values to state
+  filterState.search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+  filterState.status = document.getElementById('statusFilter')?.value || 'ALL';
+  filterState.category = document.getElementById('categoryFilter')?.value || 'ALL';
+  filterState.sort = document.getElementById('sortFilter')?.value || 'NEWEST';
 
   let filtered = [...allFeedbackCache];
 
-  if (search) filtered = filtered.filter(f => f.text.toLowerCase().includes(search));
-  if (status !== 'ALL') filtered = filtered.filter(f => f.status === status);
-  if (category !== 'ALL') filtered = filtered.filter(f => f.category === category);
+  if (filterState.search) {
+    filtered = filtered.filter(f =>
+      f.text.toLowerCase().includes(filterState.search)
+    );
+  }
+  if (filterState.status !== 'ALL') {
+    filtered = filtered.filter(f => f.status === filterState.status);
+  }
+  if (filterState.category !== 'ALL') {
+    filtered = filtered.filter(f => f.category === filterState.category);
+  }
 
-  if (sort === 'NEWEST') filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  if (sort === 'OLDEST') filtered.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-  if (sort === 'HIGHEST') filtered.sort((a, b) => b.voteScore - a.voteScore);
-  if (sort === 'LOWEST') filtered.sort((a, b) => a.voteScore - b.voteScore);
-  if (sort === 'MOST_UPVOTED') filtered.sort((a, b) => b.upvotes - a.upvotes);
+  if (filterState.sort === 'NEWEST') filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  if (filterState.sort === 'OLDEST') filtered.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  if (filterState.sort === 'HIGHEST') filtered.sort((a, b) => b.voteScore - a.voteScore);
+  if (filterState.sort === 'LOWEST') filtered.sort((a, b) => a.voteScore - b.voteScore);
+  if (filterState.sort === 'MOST_UPVOTED') filtered.sort((a, b) => b.upvotes - a.upvotes);
 
   window.currentFeedbackPage = 1;
   renderFeedbackList(filtered);
+
+  // Restore filter values after re-render
+  restoreFilterValues();
 };
 
 const resetFilters = () => {
+  // Reset state
+  filterState.search = '';
+  filterState.status = 'ALL';
+  filterState.category = 'ALL';
+  filterState.sort = 'NEWEST';
+
   window.currentFeedbackPage = 1;
   renderFeedbackList(allFeedbackCache);
+
+  // Restore after re-render
+  restoreFilterValues();
+};
+
+const restoreFilterValues = () => {
+  const searchInput = document.getElementById('searchInput');
+  const statusFilter = document.getElementById('statusFilter');
+  const categoryFilter = document.getElementById('categoryFilter');
+  const sortFilter = document.getElementById('sortFilter');
+
+  if (searchInput) searchInput.value = filterState.search;
+  if (statusFilter) statusFilter.value = filterState.status;
+  if (categoryFilter) categoryFilter.value = filterState.category;
+  if (sortFilter) sortFilter.value = filterState.sort;
 };
 
 const changePage = (page) => {
@@ -322,6 +367,7 @@ const changePage = (page) => {
 // =====================
 const toggleResponses = async (id) => {
   const container = document.getElementById(`responses-${id}`);
+
   if (!container.classList.contains('d-none')) {
     container.classList.add('d-none');
     return;
@@ -332,29 +378,49 @@ const toggleResponses = async (id) => {
 
   try {
     const result = await apiGetResponses(id);
+    console.log('Responses result:', result); // debug line
+
     const responses = result.data || [];
 
-    if (responses.length === 0) {
-      container.innerHTML = `<div class="alert alert-info small py-2">No responses yet.</div>`;
-      return;
-    }
-
-    container.innerHTML = `
-      <div class="border-start border-primary ps-3">
-        <p class="fw-bold small mb-2">💬 Response Thread:</p>
-        ${responses.map((r, i) => `
-          <div class="mb-2 p-2 bg-light rounded">
-            <div class="d-flex justify-content-between">
-              <small class="text-primary fw-bold">Admin #${i + 1}: ${r.adminWallet.slice(0,6)}...${r.adminWallet.slice(-4)}</small>
+    const responseList = responses.length === 0
+      ? `<p class="text-muted small mb-2">No responses yet. Be the first!</p>`
+      : responses.map((r, i) => `
+          <div class="mb-2 p-2 rounded" style="background:#f8f9fa; border-left: 3px solid #4facfe">
+            <div class="d-flex justify-content-between align-items-center">
+              <small class="fw-bold text-primary">
+                💬 #${i + 1} — ${r.adminWallet.slice(0,6)}...${r.adminWallet.slice(-4)}
+              </small>
               <small class="text-muted">${new Date(r.timestamp).toLocaleDateString()}</small>
             </div>
             <p class="mb-0 small mt-1">${r.responseText}</p>
           </div>
-        `).join('')}
+        `).join('');
+
+    const commentInput = walletAddress ? `
+      <div class="mt-2 pt-2 border-top">
+        <textarea id="commentText-${id}" class="form-control form-control-sm mb-1"
+          rows="2" placeholder="Write a comment..."></textarea>
+        <button class="btn btn-sm btn-outline-primary mt-1"
+          onclick="submitComment(${id})">
+          💬 Add Comment
+        </button>
+      </div>
+    ` : `<small class="text-muted">Connect wallet to comment.</small>`;
+
+    container.innerHTML = `
+      <div class="border-start border-primary ps-3 mt-2">
+        <p class="fw-bold small mb-2">
+          💬 Responses & Comments
+          <span class="badge bg-primary ms-1">${responses.length}</span>
+        </p>
+        ${responseList}
+        ${commentInput}
       </div>
     `;
+
   } catch (err) {
-    container.innerHTML = `<div class="alert alert-danger small py-2">Error loading responses.</div>`;
+    console.error('Toggle responses error:', err);
+    container.innerHTML = `<div class="alert alert-danger small py-2">Error: ${err.message}</div>`;
   }
 };
 
