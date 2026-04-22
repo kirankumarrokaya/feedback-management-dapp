@@ -96,15 +96,15 @@ npm install
 
 ### 3. Configure Environment Variables
 
-Create a `.env` file in the root and backend directories:
+Create a `.env` file in the backend directories:
 
-**Root `.env`** (for Backend deployment):
+**Backend `.env`** (for Backend deployment):
 ```env
 PORT=5000
-ADMIN_WALLET_ADDRESS=******
-CONTRACT_ADDRESS=******
-ALCHEMY_URL=https://eth-sepolia.g.alchemy.com/v2/***
-PRIVATE_KEY=******
+ADMIN_WALLET_ADDRESS=<admin_wallet_address>
+CONTRACT_ADDRESS=<contract_address>
+ALCHEMY_URL=https://eth-sepolia.g.alchemy.com/v2/<API_KEY>
+PRIVATE_KEY:<eth_private_key>
 
 ```
 
@@ -115,9 +115,32 @@ PRIVATE_KEY=******
 ```bash
 https://remix.ethereum.org
 ```
-- Compile
-- Get Contract Address
-- Get ABI json file and pt in backend/config
+
+- In remix IDE, first remove other contract if there
+- Then paste the contracts/FeedbackContract.sol file from this codebase to contract folder in Remix IDE
+- Now click Compile button
+- After Compile is successful, click `Debug and Run Transactions` button from the sidebar
+- Inside this select `Browser Estension` and then `Metamask` in environment and click `Deploy`
+![alt text](image.png) 
+- Now it will Ask to connect the metamask , after confirmation we will get `Deployed Contract Address`
+![alt text](image-1.png)
+- Copy contract address and paste in `CONTRACT_ADDRESS` of `.env` file of backend
+- And Click on `Solidity Compiler` from sidebar and at the bottom click on `ABI` which will copy ABI json data and paste this in `backend/config/contractABI.json` file
+
+### Now copy metamask private key and Admin Wallet from
+- Acconut 1 -> three dots(.) -> Account Details -> Private Keys -> enter password and then copy `eth private key`
+*DO NOT SHARE THIS KEY TO ANYONE ELSE*
+- Now Paster this key in .env file `PRIVATE_KEY` variable
+
+- Now For admin Wallet, just copy eth wallet address and paste in `ADMIN_WALLET_ADDRESS` varaible
+
+### Now for `ALCHEMY_URL` 
+- Signin to to https://login.alchemy.com/u/signup
+- Then Create New App 
+- Give name
+- In Chain Select `Ethereum`
+- And choose any one and go to next step for other things
+- After App Created Copy `Api key` and paste in `ALCHEMY_URL` in `<API_KEY>`
 
 Copy the deployed contract address into:
 - `frontend/js/config.js` → `CONTRACT_ADDRESS`
@@ -133,8 +156,11 @@ node server.js
 
 ### 6. Open the Frontend
 
-Open `frontend/index.html` directly in your browser
+Open `frontend/index.html` directly in your browser or as `Live Server`
 
+*I perfer Live Server*
+
+```Now App is ready to use```
 
 ---
 
